@@ -200,6 +200,7 @@ let currentChat = null
 function newChat(){
   currentChat = {
     id: Date.now(),
+    userId: "user_" + Date.now(), // 👈 YE LINE ADD KARO
     messages:[]
   }
   chats.push(currentChat)
@@ -287,8 +288,8 @@ async function send(){
 
   try{
 
-    const url = API + "?msg=" + encodeURIComponent(msg) + "&user=user1"
-
+    const url = API + "?msg=" + encodeURIComponent(msg) + "&user=" + currentChat.userId
+    
     const res = await fetch(url)
     const data = await res.json()
 
