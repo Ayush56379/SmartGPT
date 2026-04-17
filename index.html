@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SmartGPT</title>
 
@@ -9,56 +8,21 @@
 body{
   margin:0;
   font-family:system-ui;
-  display:flex;
-  height:100vh;
-  background:linear-gradient(135deg,#0f172a,#020617);
+  background:#0f172a;
   color:white;
-}
-
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:rgba(2,6,23,0.8);
-  backdrop-filter:blur(10px);
-  padding:15px;
   display:flex;
   flex-direction:column;
-  border-right:1px solid #1e293b;
-}
-
-.logo{
-  font-size:22px;
-  font-weight:bold;
-  color:#38bdf8;
-}
-
-.newchat{
-  margin-top:20px;
-  padding:10px;
-  background:#1e293b;
-  border-radius:8px;
-  cursor:pointer;
-  text-align:center;
-  transition:.3s;
-}
-
-.newchat:hover{
-  background:#334155;
-}
-
-/* MAIN */
-.main{
-  flex:1;
-  display:flex;
-  flex-direction:column;
+  height:100vh;
 }
 
 /* HEADER */
 .header{
   padding:15px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  background:#020617;
   border-bottom:1px solid #1e293b;
-  background:rgba(2,6,23,0.6);
-  backdrop-filter:blur(10px);
 }
 
 /* CHAT */
@@ -66,53 +30,53 @@ body{
   flex:1;
   overflow-y:auto;
   padding:20px;
+  max-width:800px;
+  margin:auto;
+  width:100%;
 }
 
 .msg{
-  max-width:70%;
-  padding:12px;
-  margin-bottom:12px;
+  padding:14px;
+  margin:10px 0;
   border-radius:12px;
+  line-height:1.5;
   animation:fade 0.3s ease;
+  white-space:pre-wrap;
 }
 
 .user{
   background:#2563eb;
   margin-left:auto;
+  max-width:80%;
 }
 
 .ai{
   background:#1e293b;
+  max-width:80%;
 }
 
 /* INPUT */
 .inputbox{
   display:flex;
   padding:15px;
-  border-top:1px solid #1e293b;
-  background:rgba(2,6,23,0.6);
+  background:#020617;
 }
 
 input{
   flex:1;
-  padding:12px;
-  border-radius:10px;
+  padding:14px;
+  border-radius:12px;
   border:none;
   outline:none;
 }
 
 button{
   margin-left:10px;
-  padding:12px 18px;
-  background:#38bdf8;
+  padding:14px 20px;
   border:none;
-  border-radius:10px;
+  background:#38bdf8;
+  border-radius:12px;
   cursor:pointer;
-  transition:.2s;
-}
-
-button:hover{
-  transform:scale(1.05);
 }
 
 /* TYPING */
@@ -144,22 +108,14 @@ button:hover{
 
 <body>
 
-<div class="sidebar">
-  <div class="logo">SmartGPT</div>
-  <div class="newchat" onclick="newChat()">+ New Chat</div>
-</div>
+<div class="header">SmartGPT</div>
 
-<div class="main">
+<div class="chat" id="chat"></div>
 
-  <div class="header">SmartGPT AI</div>
-
-  <div class="chat" id="chat"></div>
-
-  <div class="inputbox">
-    <input id="input" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')send()">
-    <button onclick="send()">Send</button>
-  </div>
-
+<div class="inputbox">
+  <input id="input" placeholder="Ask anything..." 
+    onkeypress="if(event.key==='Enter')send()">
+  <button onclick="send()">Send</button>
 </div>
 
 <script>
@@ -171,7 +127,7 @@ const chat = document.getElementById("chat")
 function addMsg(text,type){
   const div = document.createElement("div")
   div.className = "msg "+type
-  div.innerText = text
+  div.textContent = text
   chat.appendChild(div)
   chat.scrollTop = chat.scrollHeight
 }
@@ -211,34 +167,25 @@ async function send(){
       body:JSON.stringify({message:msg})
     })
 
-    // 🔥 FIX: response check
-    if(!res.ok){
-      throw new Error("HTTP error " + res.status)
-    }
-
     const data = await res.json()
 
     removeTyping()
 
-    if(data.success){
+    // 🔥 IMPORTANT FIX (your backend format)
+    if(data.reply){
       addMsg(data.reply,"ai")
     }else{
-      addMsg("Error: "+data.error,"ai")
+      addMsg("No response","ai")
     }
 
   }catch(err){
 
     removeTyping()
-
-    addMsg("⚠️ Server error. Check API deployment or internet.","ai")
-
+    addMsg("⚠️ Error connecting to server","ai")
     console.log(err)
+
   }
 
-}
-
-function newChat(){
-  chat.innerHTML=""
 }
 
 </script>
