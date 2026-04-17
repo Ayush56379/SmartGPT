@@ -19,7 +19,6 @@ body{
 .header{
   padding:15px;
   text-align:center;
-  font-size:18px;
   font-weight:bold;
   background:#020617;
   border-bottom:1px solid #1e293b;
@@ -113,8 +112,7 @@ button{
 <div class="chat" id="chat"></div>
 
 <div class="inputbox">
-  <input id="input" placeholder="Ask anything..." 
-    onkeypress="if(event.key==='Enter')send()">
+  <input id="input" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')send()">
   <button onclick="send()">Send</button>
 </div>
 
@@ -159,29 +157,21 @@ async function send(){
 
   try{
 
-    const res = await fetch(API,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({message:msg})
-    })
+    // ✅ FIX: GET request use karo
+    const url = API + "?msg=" + encodeURIComponent(msg)
+
+    const res = await fetch(url)
 
     const data = await res.json()
 
     removeTyping()
 
-    // 🔥 IMPORTANT FIX (your backend format)
-    if(data.reply){
-      addMsg(data.reply,"ai")
-    }else{
-      addMsg("No response","ai")
-    }
+    addMsg(data.reply,"ai")
 
   }catch(err){
 
     removeTyping()
-    addMsg("⚠️ Error connecting to server","ai")
+    addMsg("⚠️ API not responding","ai")
     console.log(err)
 
   }
