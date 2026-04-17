@@ -11,8 +11,61 @@ body{
   background:#0f172a;
   color:white;
   display:flex;
-  flex-direction:column;
   height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:250px;
+  background:#020617;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid #1e293b;
+}
+
+.logo{
+  font-size:20px;
+  font-weight:bold;
+  color:#38bdf8;
+}
+
+.newchat{
+  margin-top:10px;
+  padding:10px;
+  background:#1e293b;
+  border-radius:8px;
+  cursor:pointer;
+  text-align:center;
+  transition:0.3s;
+}
+
+.newchat:hover{
+  background:#334155;
+}
+
+#history{
+  margin-top:10px;
+  overflow:auto;
+  flex:1;
+}
+
+.history-item{
+  padding:8px;
+  cursor:pointer;
+  border-radius:6px;
+  font-size:14px;
+}
+
+.history-item:hover{
+  background:#1e293b;
+}
+
+/* MAIN */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
 /* HEADER */
@@ -76,6 +129,11 @@ button{
   background:#38bdf8;
   border-radius:12px;
   cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover{
+  transform:scale(1.05);
 }
 
 /* TYPING */
@@ -107,13 +165,25 @@ button{
 
 <body>
 
-<div class="header">SmartGPT</div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">SmartGPT</div>
+  <div class="newchat" onclick="newChat()">+ New Chat</div>
+  <div id="history"></div>
+</div>
 
-<div class="chat" id="chat"></div>
+<!-- MAIN -->
+<div class="main">
 
-<div class="inputbox">
-  <input id="input" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')send()">
-  <button onclick="send()">Send</button>
+  <div class="header">SmartGPT AI</div>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="inputbox">
+    <input id="input" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')send()">
+    <button onclick="send()">Send</button>
+  </div>
+
 </div>
 
 <script>
@@ -121,6 +191,56 @@ button{
 const API = "https://script.google.com/macros/s/AKfycbwgsVWUOju0OHwkDQpWss-_0ktI4_2Nmv5KgNxhD69bJKjIomLYoK-fFtFe8p8bxdnD9A/exec"
 
 const chat = document.getElementById("chat")
+
+/* ================= HISTORY ================= */
+
+let chats = JSON.parse(localStorage.getItem("chats")) || []
+let currentChat = null
+
+function newChat(){
+  currentChat = {
+    id: Date.now(),
+    messages:[]
+  }
+  chats.push(currentChat)
+  saveChats()
+  renderChats()
+  renderMessages()
+}
+
+function saveChats(){
+  localStorage.setItem("chats", JSON.stringify(chats))
+}
+
+function renderChats(){
+  const box = document.getElementById("history")
+  box.innerHTML = ""
+
+  chats.forEach(chatItem=>{
+    const div = document.createElement("div")
+    div.className="history-item"
+    div.innerText = chatItem.messages[0]?.text || "New Chat"
+
+    div.onclick = ()=>{
+      currentChat = chatItem
+      renderMessages()
+    }
+
+    box.appendChild(div)
+  })
+}
+
+function renderMessages(){
+  chat.innerHTML=""
+
+  if(!currentChat) return
+
+  currentChat.messages.forEach(m=>{
+    addMsg(m.text,m.type)
+  })
+}
+
+/* ================= CHAT ================= */
 
 function addMsg(text,type){
   const div = document.createElement("div")
@@ -143,6 +263,8 @@ function removeTyping(){
   if(t) t.remove()
 }
 
+/* ================= SEND ================= */
+
 async function send(){
 
   const input = document.getElementById("input")
@@ -150,32 +272,54 @@ async function send(){
 
   if(!msg) return
 
+  if(!currentChat) newChat()
+
   addMsg(msg,"user")
+
+  currentChat.messages.push({
+    text: msg,
+    type:"user"
+  })
+
   input.value=""
 
   typing()
 
   try{
 
-    // ✅ FIX: GET request use karo
-    const url = API + "?msg=" + encodeURIComponent(msg)
+    const url = API + "?msg=" + encodeURIComponent(msg) + "&user=user1"
 
     const res = await fetch(url)
-
     const data = await res.json()
 
     removeTyping()
 
     addMsg(data.reply,"ai")
 
+    currentChat.messages.push({
+      text: data.reply,
+      type:"ai"
+    })
+
+    saveChats()
+    renderChats()
+
   }catch(err){
 
     removeTyping()
     addMsg("⚠️ API not responding","ai")
-    console.log(err)
 
   }
 
+}
+
+/* ================= INIT ================= */
+
+renderChats()
+
+if(chats.length){
+  currentChat = chats[0]
+  renderMessages()
 }
 
 </script>
