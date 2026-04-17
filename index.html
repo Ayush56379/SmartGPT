@@ -11,17 +11,19 @@ body{
   font-family:system-ui;
   display:flex;
   height:100vh;
-  background:#0f172a;
+  background:linear-gradient(135deg,#0f172a,#020617);
   color:white;
 }
 
 /* SIDEBAR */
 .sidebar{
   width:260px;
-  background:#020617;
+  background:rgba(2,6,23,0.8);
+  backdrop-filter:blur(10px);
   padding:15px;
   display:flex;
   flex-direction:column;
+  border-right:1px solid #1e293b;
 }
 
 .logo{
@@ -37,13 +39,11 @@ body{
   border-radius:8px;
   cursor:pointer;
   text-align:center;
+  transition:.3s;
 }
 
-.history{
-  margin-top:20px;
-  flex:1;
-  overflow:auto;
-  font-size:14px;
+.newchat:hover{
+  background:#334155;
 }
 
 /* MAIN */
@@ -57,7 +57,8 @@ body{
 .header{
   padding:15px;
   border-bottom:1px solid #1e293b;
-  background:#020617;
+  background:rgba(2,6,23,0.6);
+  backdrop-filter:blur(10px);
 }
 
 /* CHAT */
@@ -71,7 +72,7 @@ body{
   max-width:70%;
   padding:12px;
   margin-bottom:12px;
-  border-radius:10px;
+  border-radius:12px;
   animation:fade 0.3s ease;
 }
 
@@ -89,7 +90,7 @@ body{
   display:flex;
   padding:15px;
   border-top:1px solid #1e293b;
-  background:#020617;
+  background:rgba(2,6,23,0.6);
 }
 
 input{
@@ -107,6 +108,11 @@ button{
   border:none;
   border-radius:10px;
   cursor:pointer;
+  transition:.2s;
+}
+
+button:hover{
+  transform:scale(1.05);
 }
 
 /* TYPING */
@@ -141,7 +147,6 @@ button{
 <div class="sidebar">
   <div class="logo">SmartGPT</div>
   <div class="newchat" onclick="newChat()">+ New Chat</div>
-  <div class="history" id="history"></div>
 </div>
 
 <div class="main">
@@ -162,9 +167,6 @@ button{
 const API = "https://script.google.com/macros/s/AKfycbwgsVWUOju0OHwkDQpWss-_0ktI4_2Nmv5KgNxhD69bJKjIomLYoK-fFtFe8p8bxdnD9A/exec"
 
 const chat = document.getElementById("chat")
-const historyBox = document.getElementById("history")
-
-let chats = []
 
 function addMsg(text,type){
   const div = document.createElement("div")
@@ -178,12 +180,12 @@ function typing(){
   const div = document.createElement("div")
   div.className="msg ai"
   div.id="typing"
-  div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`
+  div.innerHTML=`<div class="typing"><span></span><span></span><span></span></div>`
   chat.appendChild(div)
 }
 
 function removeTyping(){
-  const t = document.getElementById("typing")
+  const t=document.getElementById("typing")
   if(t) t.remove()
 }
 
@@ -191,13 +193,11 @@ async function send(){
 
   const input = document.getElementById("input")
   const msg = input.value.trim()
+
   if(!msg) return
 
   addMsg(msg,"user")
   input.value=""
-
-  chats.push(msg)
-  updateHistory()
 
   typing()
 
@@ -211,25 +211,34 @@ async function send(){
       body:JSON.stringify({message:msg})
     })
 
+    // 🔥 FIX: response check
+    if(!res.ok){
+      throw new Error("HTTP error " + res.status)
+    }
+
     const data = await res.json()
 
     removeTyping()
 
-    addMsg(data.reply || "No response","ai")
+    if(data.success){
+      addMsg(data.reply,"ai")
+    }else{
+      addMsg("Error: "+data.error,"ai")
+    }
 
   }catch(err){
+
     removeTyping()
-    addMsg("Server error","ai")
+
+    addMsg("⚠️ Server error. Check API deployment or internet.","ai")
+
+    console.log(err)
   }
 
 }
 
 function newChat(){
   chat.innerHTML=""
-}
-
-function updateHistory(){
-  historyBox.innerHTML = chats.map(c=>`<div>• ${c}</div>`).join("")
 }
 
 </script>
